@@ -1,0 +1,7 @@
+name = "libusb1_ada"
+description = "Shiny new project"
+version = "0.1.0-dev"
+
+authors = ["Joel Reymont"]
+maintainers = ["Joel Reymont <joelr1@gmail.com>"]
+maintainers-logins = ["joelreymont"]
