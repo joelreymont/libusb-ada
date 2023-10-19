@@ -1,17 +1,11 @@
-with System;
-with System.Address_Image;
+pragma Ada_2022;
+
 with Ada.Text_IO;
 use Ada.Text_IO;
-with USB.Low;
-use USB.Low;
-with Interfaces.C;
-use Interfaces.C;
+with USB;
 
 procedure Enumerate is
-   Ctx : System.Address;
-   Err : int;
+   Ctx : constant USB.Context := USB.Make_Context;
 begin
-   Err := Init (Ctx);
-   Put_Line ("Err: " & Err'Image & ", Context: " & System.Address_Image(Ctx));
-   Deinit (Ctx);
+   Put_Line ("Ctx: " & Ctx'Image);
 end Enumerate;
