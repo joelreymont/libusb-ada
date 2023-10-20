@@ -9,3 +9,6 @@ maintainers-logins = ["joelreymont"]
 libusb = "^1.0.26"
 [[depends-on]]
 gnatcoll = "^23.0.0"
+
+[[depends-on]]
+utilada = "^2.6.0"

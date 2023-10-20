@@ -16,6 +16,8 @@ package USB is
 
     type Context is tagged private;
 
+    procedure Init;
+
     function Make_Context return Context;
 
     type Device_List is tagged private;
@@ -33,13 +35,12 @@ private
 
     procedure Context_Data_Put_Image
        (Output : in out Ada.Strings.Text_Buffers.Root_Buffer_Type'Class;
-        Value  : Context_Data);
+        Value  :        Context_Data);
 
     procedure Context_Release (Self : in out Context_Data);
 
     package Context_Pointers is new GNATCOLL.Refcount.Shared_Pointers
-       (Element_Type => Context_Data,
-        Release      => Context_Release);
+       (Element_Type => Context_Data, Release => Context_Release);
 
     type Context is new Context_Pointers.Ref with null record;
 
@@ -52,13 +53,12 @@ private
 
     procedure Device_List_Data_Put_Image
        (Output : in out Ada.Strings.Text_Buffers.Root_Buffer_Type'Class;
-        Value  : Device_List_Data);
+        Value  :        Device_List_Data);
 
     procedure Device_List_Release (Self : in out Device_List_Data);
 
     package Device_List_Pointers is new GNATCOLL.Refcount.Shared_Pointers
-       (Element_Type => Device_List_Data,
-        Release      => Device_List_Release);
+       (Element_Type => Device_List_Data, Release => Device_List_Release);
 
     type Device_List is new Device_List_Pointers.Ref with null record;
 

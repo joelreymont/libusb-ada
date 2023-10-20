@@ -1,17 +1,27 @@
 pragma Ada_2022;
 
-with Ada.Text_IO;
-use Ada.Text_IO;
 with Interfaces.C;
 with Interfaces.C.Strings;
 with Ada.Unchecked_Conversion;
 with USB.Low;
 with System.Address_Image;
-with Ada.Strings.Text_Buffers;
+with Util.Log;
+with Util.Log.Loggers;
 
 package body USB is
 
+   use Util.Log;
+
    package C renames Interfaces.C;
+
+   Log : Loggers.Logger := Loggers.Create ("LIBUSB_ADA");
+
+   procedure Init is
+   begin
+      Loggers.Initialize ("libusb-log4j.properties");
+      Log.Set_Level (DEBUG_LEVEL);
+      Log.Info ("Starting the log example, level is {0}", Log.Get_Level_Name);
+   end Init;
 
    function Error_Text (Error_Code : C.int) return String is
 
@@ -85,7 +95,8 @@ package body USB is
 
    procedure Context_Data_Put_Image
      (Output : in out Ada.Strings.Text_Buffers.Root_Buffer_Type'Class;
-      Value  : Context_Data) is
+      Value  :        Context_Data)
+   is
    begin
 
       Output.Put ("Context_Data => " & System.Address_Image (Value.Address));
@@ -110,9 +121,9 @@ package body USB is
       Number_of_Devices :=
         USB.Low.Get_DeviceList (Ctx.Get.Address, Data.Address);
       Check_Error (C.int (Number_of_Devices));
-      Put_Line
-        ("Got device list " & System.Address_Image (Data.Address) & " with " &
-         Number_of_Devices'Image & " devices");
+      Log.Debug
+        ("Got device list {0} with {1} devices", Data'Image,
+         Number_of_Devices'Image);
       Devices.Set (Data);
 
       return Devices;
@@ -121,7 +132,8 @@ package body USB is
 
    procedure Device_List_Data_Put_Image
      (Output : in out Ada.Strings.Text_Buffers.Root_Buffer_Type'Class;
-      Value  : Device_List_Data) is
+      Value  :        Device_List_Data)
+   is
    begin
 
       Output.Put
@@ -132,7 +144,7 @@ package body USB is
    procedure Device_List_Release (Self : in out Device_List_Data) is
    begin
 
-      Put_Line ("Freeing device list " & Self'Image);
+      Log.Debug ("Freeing device list: {0}", Self'Image);
       USB.Low.Free_Device_List (Self.Address, 1);
 
    end Device_List_Release;
