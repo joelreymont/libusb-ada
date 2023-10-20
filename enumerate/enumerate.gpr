@@ -19,4 +19,6 @@ project Enumerate is
       for Artifacts (".") use ("share");
    end Install;
 
+   for Target use "aarch64-darwin";
+
 end Enumerate;

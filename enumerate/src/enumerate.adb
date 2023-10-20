@@ -6,6 +6,9 @@ with USB;
 
 procedure Enumerate is
    Ctx : constant USB.Context := USB.Make_Context;
+   Devices : constant USB.Device_List := USB.Get_Device_List (Ctx);
 begin
-   Put_Line ("Ctx: " & Ctx'Image);
+
+   Put_Line ("Devices: " & Devices'Image);
+
 end Enumerate;

@@ -1,10 +1,11 @@
-pragma Ada_2012;
+pragma Ada_2022;
 
 pragma Style_Checks (Off);
 pragma Warnings (Off, "-gnatwu");
 
 with System;
 with GNATCOLL.Refcount;
+with Ada.Strings.Text_Buffers;
 
 package USB is
 
@@ -17,23 +18,49 @@ package USB is
 
     function Make_Context return Context;
 
+    type Device_List is tagged private;
+
+    function Get_Device_List (Ctx : Context'Class) return Device_List;
+
 private
 
-    type Context_Contents is new GNATCOLL.Refcount.Refcounted with record
-        Address : System.Address;
-    end record;
+    -- Context --
 
-    procedure Context_Release (Self : in out Context_Contents);
+    type Context_Data is new GNATCOLL.Refcount.Refcounted with record
+        Address : System.Address;
+    end record with
+       Put_Image => Context_Data_Put_Image;
+
+    procedure Context_Data_Put_Image
+       (Output : in out Ada.Strings.Text_Buffers.Root_Buffer_Type'Class;
+        Value  : Context_Data);
+
+    procedure Context_Release (Self : in out Context_Data);
 
     package Context_Pointers is new GNATCOLL.Refcount.Shared_Pointers
-       (Element_Type => Context_Contents,
+       (Element_Type => Context_Data,
         Release      => Context_Release);
 
     type Context is new Context_Pointers.Ref with null record;
 
-    --    No_Context : constant Context :
+    -- Device list --
 
-    --       (Context_Pointers.Null_Ref with null record);
+    type Device_List_Data is new GNATCOLL.Refcount.Refcounted with record
+        Address : System.Address;
+    end record with
+       Put_Image => Device_List_Data_Put_Image;
+
+    procedure Device_List_Data_Put_Image
+       (Output : in out Ada.Strings.Text_Buffers.Root_Buffer_Type'Class;
+        Value  : Device_List_Data);
+
+    procedure Device_List_Release (Self : in out Device_List_Data);
+
+    package Device_List_Pointers is new GNATCOLL.Refcount.Shared_Pointers
+       (Element_Type => Device_List_Data,
+        Release      => Device_List_Release);
+
+    type Device_List is new Device_List_Pointers.Ref with null record;
 
 end USB;
 

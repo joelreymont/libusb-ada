@@ -43,4 +43,6 @@ project Libusb_Ada is
       for Linker_Options use ("-lusb-1.0");
    end Linker;
 
+   for Target use "aarch64-darwin";
+   
 end Libusb_Ada;

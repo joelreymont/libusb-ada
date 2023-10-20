@@ -1,28 +1,32 @@
+pragma Ada_2022;
+
+with Ada.Text_IO;
+use Ada.Text_IO;
 with Interfaces.C;
-use Interfaces.C;
 with Interfaces.C.Strings;
 with Ada.Unchecked_Conversion;
 with USB.Low;
-with Ada.Text_IO;
-use Ada.Text_IO;
+with System.Address_Image;
+with Ada.Strings.Text_Buffers;
 
 package body USB is
 
-   function Error_Text (Error_Code : Interfaces.C.int) return String is
+   package C renames Interfaces.C;
 
-      Text : constant Interfaces.C.Strings.chars_ptr :=
-        USB.Low.Error_Text (Error_Code);
+   function Error_Text (Error_Code : C.int) return String is
+
+      Text : constant C.Strings.chars_ptr := USB.Low.Error_Text (Error_Code);
 
    begin
 
-      return Interfaces.C.Strings.Value (Text);
+      return C.Strings.Value (Text);
 
    end Error_Text;
 
-   procedure Check_Error (Error_Code : Interfaces.C.int) is
+   procedure Check_Error (Error_Code : C.int) is
 
       function Error_From_Code is new Ada.Unchecked_Conversion
-        (Interfaces.C.int, USB.Low.Error);
+        (C.int, USB.Low.Error);
       Err  : constant USB.Low.Error := Error_From_Code (Error_Code);
       Text : constant String        := Error_Text (Error_Code);
 
@@ -68,21 +72,69 @@ package body USB is
    function Make_Context return Context is
 
       Ctx  : Context;
-      Data : Context_Contents;
+      Data : Context_Data;
 
    begin
 
       Check_Error (USB.Low.Init (Data.Address));
       Ctx.Set (Data);
+
       return Ctx;
 
    end Make_Context;
 
-   procedure Context_Release (Self : in out Context_Contents) is
+   procedure Context_Data_Put_Image
+     (Output : in out Ada.Strings.Text_Buffers.Root_Buffer_Type'Class;
+      Value  : Context_Data) is
+   begin
+
+      Output.Put ("Context_Data => " & System.Address_Image (Value.Address));
+
+   end Context_Data_Put_Image;
+
+   procedure Context_Release (Self : in out Context_Data) is
    begin
 
       USB.Low.Deinit (Self.Address);
 
    end Context_Release;
+
+   function Get_Device_List (Ctx : Context'Class) return Device_List is
+
+      Data              : Device_List_Data;
+      Number_of_Devices : C.long;
+      Devices           : Device_List;
+
+   begin
+
+      Number_of_Devices :=
+        USB.Low.Get_DeviceList (Ctx.Get.Address, Data.Address);
+      Check_Error (C.int (Number_of_Devices));
+      Put_Line
+        ("Got device list " & System.Address_Image (Data.Address) & " with " &
+         Number_of_Devices'Image & " devices");
+      Devices.Set (Data);
+
+      return Devices;
+
+   end Get_Device_List;
+
+   procedure Device_List_Data_Put_Image
+     (Output : in out Ada.Strings.Text_Buffers.Root_Buffer_Type'Class;
+      Value  : Device_List_Data) is
+   begin
+
+      Output.Put
+        ("Device_List_Data => " & System.Address_Image (Value.Address));
+
+   end Device_List_Data_Put_Image;
+
+   procedure Device_List_Release (Self : in out Device_List_Data) is
+   begin
+
+      Put_Line ("Freeing device list " & Self'Image);
+      USB.Low.Free_Device_List (Self.Address, 1);
+
+   end Device_List_Release;
 
 end USB;
