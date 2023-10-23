@@ -3,10 +3,10 @@ pragma Ada_2022;
 with Interfaces.C;
 with Interfaces.C.Strings;
 with Ada.Unchecked_Conversion;
-with USB.Low;
 with System.Address_Image;
 with Util.Log;
 with Util.Log.Loggers;
+with USB.Low;
 
 package body USB is
 
@@ -95,11 +95,11 @@ package body USB is
 
    procedure Context_Data_Put_Image
      (Output : in out Ada.Strings.Text_Buffers.Root_Buffer_Type'Class;
-      Value  :        Context_Data)
-   is
+      Value  : Context_Data) is
    begin
 
-      Output.Put ("Context_Data => " & System.Address_Image (Value.Address));
+      Output.Put
+        ("Context_Data => " & System.Address_Image (Value.Address'Address));
 
    end Context_Data_Put_Image;
 
@@ -132,12 +132,12 @@ package body USB is
 
    procedure Device_List_Data_Put_Image
      (Output : in out Ada.Strings.Text_Buffers.Root_Buffer_Type'Class;
-      Value  :        Device_List_Data)
-   is
+      Value  : Device_List_Data) is
    begin
 
       Output.Put
-        ("Device_List_Data => " & System.Address_Image (Value.Address));
+        ("Device_List_Data => " &
+         System.Address_Image (Value.Address'Address));
 
    end Device_List_Data_Put_Image;
 

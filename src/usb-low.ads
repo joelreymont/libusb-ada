@@ -7,7 +7,7 @@ with Interfaces.C;
 with Interfaces.C.Strings;
 with System;
 
-package USB.Low is
+private package USB.Low is
 
   package C renames Interfaces.C;
 
@@ -43,19 +43,19 @@ package USB.Low is
     Success                       => 0);
   for Error'Size use C.int'Size;
 
-  function Init (Context : out System.Address) return C.int with
+  function Init (Context : out Pointer) return C.int with
    Import => True, Convention => C, External_Name => "libusb_init";
 
-  procedure Deinit (Context : System.Address) with
+  procedure Deinit (Context : Pointer) with
    Import => True, Convention => C, External_Name => "libusb_exit";
 
   function Get_DeviceList
-   (Context     : System.Address;
-    Device_List : out System.Address)
+   (Context     : Pointer;
+    Device_List : out Pointer)
     return C.long with
    Import => True, Convention => C, External_Name => "libusb_get_device_list";
 
-  procedure Free_Device_List (Devices : System.Address; Unref : C.int) with
+  procedure Free_Device_List (Devices : Pointer; Unref : C.int) with
    Import => True, Convention => C, External_Name => "libusb_free_device_list";
 
   function Error_Text
