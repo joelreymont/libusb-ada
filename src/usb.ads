@@ -6,66 +6,79 @@ pragma Warnings (Off, "-gnatwu");
 with System;
 with GNATCOLL.Refcount;
 with Ada.Strings.Text_Buffers;
-
-limited private with USB.Low;
+with LibUSB;
 
 package USB is
 
-   Input_Output_Error, Invalid_Parameter_Error, Access_Denied_Error,
-   No_Device_Error, Not_Found_Error, Resource_Busy_Error, Timeout_Error,
-   Overflow_Error, Pipe_Error, Syscall_Interrupted_Error, Out_Of_Memory_Error,
-   Operation_Not_Supported_Error, Other_Error : exception;
+  Input_Output_Error, Invalid_Parameter_Error, Access_Denied_Error,
+  No_Device_Error, Not_Found_Error, Resource_Busy_Error, Timeout_Error,
+  Overflow_Error, Pipe_Error, Syscall_Interrupted_Error, Out_Of_Memory_Error,
+  Operation_Not_Supported_Error, Other_Error : exception;
 
-   type Context is tagged private;
+  type Context is tagged private;
 
-   procedure Init;
+  procedure Init;
 
-   function Make_Context return Context;
+  function Make_Context return Context;
 
-   type Device_List is tagged private;
+  type Device is tagged private;
+  type Device_List is tagged private;
 
-   function Get_Device_List (Ctx : Context'Class) return Device_List;
+  function Get_Device_List (Ctx : Context'Class) return Device_List;
 
 private
 
-   type Pointer is access all Integer;
-   pragma Convention (C, Pointer);
+  type Context_Data is new GNATCOLL.Refcount.Refcounted with record
+    Context : LibUSB.Context;
+  end record with
+   Put_Image => Context_Data_Put_Image;
 
-   -- Context --
+  procedure Context_Data_Put_Image
+   (Output : in out Ada.Strings.Text_Buffers.Root_Buffer_Type'Class;
+    Value  : Context_Data);
 
-   type Context_Data is new GNATCOLL.Refcount.Refcounted with record
-      Address : Pointer;
-   end record with
-     Put_Image => Context_Data_Put_Image;
+  procedure Context_Release (Self : in out Context_Data);
 
-   procedure Context_Data_Put_Image
-     (Output : in out Ada.Strings.Text_Buffers.Root_Buffer_Type'Class;
-      Value  :        Context_Data);
+  package Context_Pointers is new GNATCOLL.Refcount.Shared_Pointers
+   (Element_Type => Context_Data,
+    Release      => Context_Release);
 
-   procedure Context_Release (Self : in out Context_Data);
+  type Context is new Context_Pointers.Ref with null record;
 
-   package Context_Pointers is new GNATCOLL.Refcount.Shared_Pointers
-     (Element_Type => Context_Data, Release => Context_Release);
+  type Device_Data is new GNATCOLL.Refcount.Refcounted with record
+    Device : LibUSB.Device;
+  end record with
+   Put_Image => Device_Data_Put_Image;
 
-   type Context is new Context_Pointers.Ref with null record;
+  procedure Device_Data_Put_Image
+   (Output : in out Ada.Strings.Text_Buffers.Root_Buffer_Type'Class;
+    Value  : Device_Data);
 
-   -- Device list --
+  procedure Device_Release (Self : in out Device_Data);
 
-   type Device_List_Data is new GNATCOLL.Refcount.Refcounted with record
-      Address : Pointer;
-   end record with
-     Put_Image => Device_List_Data_Put_Image;
+  package Device_Pointers is new GNATCOLL.Refcount.Shared_Pointers
+   (Element_Type => Device_Data,
+    Release      => Device_Release);
 
-   procedure Device_List_Data_Put_Image
-     (Output : in out Ada.Strings.Text_Buffers.Root_Buffer_Type'Class;
-      Value  :        Device_List_Data);
+  type Device is new Device_Pointers.Ref with null record;
 
-   procedure Device_List_Release (Self : in out Device_List_Data);
+  type Device_List_Data is new GNATCOLL.Refcount.Refcounted with record
+    Device_List : LibUSB.Device_List;
+    N: Integer;
+  end record with
+   Put_Image => Device_List_Data_Put_Image;
 
-   package Device_List_Pointers is new GNATCOLL.Refcount.Shared_Pointers
-     (Element_Type => Device_List_Data, Release => Device_List_Release);
+  procedure Device_List_Data_Put_Image
+   (Output : in out Ada.Strings.Text_Buffers.Root_Buffer_Type'Class;
+    Value  : Device_List_Data);
 
-   type Device_List is new Device_List_Pointers.Ref with null record;
+  procedure Device_List_Release (Self : in out Device_List_Data);
+
+  package Device_List_Pointers is new GNATCOLL.Refcount.Shared_Pointers
+   (Element_Type => Device_List_Data,
+    Release      => Device_List_Release);
+
+  type Device_List is new Device_List_Pointers.Ref with null record;
 
 end USB;
 

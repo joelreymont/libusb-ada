@@ -3,11 +3,12 @@ pragma Ada_2012;
 pragma Style_Checks (Off);
 pragma Warnings (Off, "-gnatwu");
 
+with System;
 with Interfaces.C;
 with Interfaces.C.Strings;
-with System;
+with Interfaces.C.Pointers;
 
-private package USB.Low is
+package LibUSB is
 
   package C renames Interfaces.C;
 
@@ -43,26 +44,44 @@ private package USB.Low is
     Success                       => 0);
   for Error'Size use C.int'Size;
 
-  function Init (Context : out Pointer) return C.int with
+  type Pointer is access all Integer;
+  pragma Convention (C, Pointer);
+
+  type Context is new Pointer;
+
+  function Init (Ctx : out Context) return C.int with
    Import => True, Convention => C, External_Name => "libusb_init";
 
-  procedure Deinit (Context : Pointer) with
+  procedure Deinit (Ctx : Context) with
    Import => True, Convention => C, External_Name => "libusb_exit";
 
+  type Device is new Pointer;
+
+  procedure Unref_Device (Dev : Device) with
+   Import => True, Convention => C, External_Name => "libusb_unref_device";
+
+  type Device_Array is array (Integer range <>) of aliased Device;
+  pragma Convention (C, Device_Array);
+
+  package Device_Pointers is new Interfaces.C.Pointers
+   (Integer, Device, Device_Array, null);
+
+  type Device_List is new Device_Pointers.Pointer;
+
   function Get_DeviceList
-   (Context     : Pointer;
-    Device_List : out Pointer)
+   (Ctx     : Context;
+    Devices : out Device_List)
     return C.long with
    Import => True, Convention => C, External_Name => "libusb_get_device_list";
 
-  procedure Free_Device_List (Devices : Pointer; Unref : C.int) with
+  procedure Free_Device_List (Devices : Device_List; Unref : C.int) with
    Import => True, Convention => C, External_Name => "libusb_free_device_list";
 
   function Error_Text
    (Error_Code : Interfaces.C.int) return Interfaces.C.Strings.chars_ptr with
    Import => True, Convention => C, External_Name => "libusb_strerror";
 
-end USB.Low;
+end LibUSB;
 
 pragma Style_Checks (On);
 pragma Warnings (On, "-gnatwu");

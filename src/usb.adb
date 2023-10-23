@@ -2,11 +2,11 @@ pragma Ada_2022;
 
 with Interfaces.C;
 with Interfaces.C.Strings;
+with Interfaces.C.Pointers;
 with Ada.Unchecked_Conversion;
 with System.Address_Image;
 with Util.Log;
 with Util.Log.Loggers;
-with USB.Low;
 
 package body USB is
 
@@ -25,7 +25,7 @@ package body USB is
 
    function Error_Text (Error_Code : C.int) return String is
 
-      Text : constant C.Strings.chars_ptr := USB.Low.Error_Text (Error_Code);
+      Text : constant C.Strings.chars_ptr := LibUSB.Error_Text (Error_Code);
 
    begin
 
@@ -36,9 +36,9 @@ package body USB is
    procedure Check_Error (Error_Code : C.int) is
 
       function Error_From_Code is new Ada.Unchecked_Conversion
-        (C.int, USB.Low.Error);
-      Err  : constant USB.Low.Error := Error_From_Code (Error_Code);
-      Text : constant String        := Error_Text (Error_Code);
+        (C.int, LibUSB.Error);
+      Err  : constant LibUSB.Error := Error_From_Code (Error_Code);
+      Text : constant String       := Error_Text (Error_Code);
 
    begin
 
@@ -47,31 +47,31 @@ package body USB is
       end if;
 
       case Err is
-         when USB.Low.Other_Error =>
+         when LibUSB.Other_Error =>
             raise Other_Error with Text;
-         when USB.Low.Operation_Not_Supported_Error =>
+         when LibUSB.Operation_Not_Supported_Error =>
             raise Operation_Not_Supported_Error with Text;
-         when USB.Low.Out_Of_Memory_Error =>
+         when LibUSB.Out_Of_Memory_Error =>
             raise Out_Of_Memory_Error with Text;
-         when USB.Low.Syscall_Interrupted_Error =>
+         when LibUSB.Syscall_Interrupted_Error =>
             raise Syscall_Interrupted_Error with Text;
-         when USB.Low.Pipe_Error =>
+         when LibUSB.Pipe_Error =>
             raise Pipe_Error with Text;
-         when USB.Low.Overflow_Error =>
+         when LibUSB.Overflow_Error =>
             raise Overflow_Error with Text;
-         when USB.Low.Timeout_Error =>
+         when LibUSB.Timeout_Error =>
             raise Timeout_Error with Text;
-         when USB.Low.Resource_Busy_Error =>
+         when LibUSB.Resource_Busy_Error =>
             raise Resource_Busy_Error with Text;
-         when USB.Low.Not_Found_Error =>
+         when LibUSB.Not_Found_Error =>
             raise Not_Found_Error with Text;
-         when USB.Low.No_Device_Error =>
+         when LibUSB.No_Device_Error =>
             raise No_Device_Error with Text;
-         when USB.Low.Access_Denied_Error =>
+         when LibUSB.Access_Denied_Error =>
             raise Access_Denied_Error with Text;
-         when USB.Low.Invalid_Parameter_Error =>
+         when LibUSB.Invalid_Parameter_Error =>
             raise Invalid_Parameter_Error with Text;
-         when USB.Low.Input_Output_Error =>
+         when LibUSB.Input_Output_Error =>
             raise Input_Output_Error with Text;
          when others =>
             null;
@@ -86,7 +86,7 @@ package body USB is
 
    begin
 
-      Check_Error (USB.Low.Init (Data.Address));
+      Check_Error (LibUSB.Init (Data.Context));
       Ctx.Set (Data);
 
       return Ctx;
@@ -99,16 +99,33 @@ package body USB is
    begin
 
       Output.Put
-        ("Context_Data => " & System.Address_Image (Value.Address'Address));
+        ("Context_Data => " & System.Address_Image (Value.Context'Address));
 
    end Context_Data_Put_Image;
 
    procedure Context_Release (Self : in out Context_Data) is
    begin
 
-      USB.Low.Deinit (Self.Address);
+      LibUSB.Deinit (Self.Context);
 
    end Context_Release;
+
+   procedure Device_Data_Put_Image
+     (Output : in out Ada.Strings.Text_Buffers.Root_Buffer_Type'Class;
+      Value  : Device_Data) is
+   begin
+
+      Output.Put
+        ("Device_Data => " & System.Address_Image (Value.Device'Address));
+
+   end Device_Data_Put_Image;
+
+   procedure Device_Release (Self : in out Device_Data) is
+   begin
+
+      LibUSB.Unref_Device (Self.Device);
+
+   end Device_Release;
 
    function Get_Device_List (Ctx : Context'Class) return Device_List is
 
@@ -119,7 +136,7 @@ package body USB is
    begin
 
       Number_of_Devices :=
-        USB.Low.Get_DeviceList (Ctx.Get.Address, Data.Address);
+        LibUSB.Get_DeviceList (Ctx.Get.Context, Data.Device_List);
       Check_Error (C.int (Number_of_Devices));
       Log.Debug
         ("Got device list {0} with {1} devices", Data'Image,
@@ -137,7 +154,7 @@ package body USB is
 
       Output.Put
         ("Device_List_Data => " &
-         System.Address_Image (Value.Address'Address));
+         System.Address_Image (Value.Device_List'Address));
 
    end Device_List_Data_Put_Image;
 
@@ -145,7 +162,7 @@ package body USB is
    begin
 
       Log.Debug ("Freeing device list: {0}", Self'Image);
-      USB.Low.Free_Device_List (Self.Address, 1);
+      LibUSB.Free_Device_List (Self.Device_List, 1);
 
    end Device_List_Release;
 
