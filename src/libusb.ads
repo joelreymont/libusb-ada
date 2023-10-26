@@ -47,6 +47,10 @@ package LibUSB is
   type Pointer is access all Integer;
   pragma Convention (C, Pointer);
 
+  function Error_Text
+   (Error_Code : Interfaces.C.int) return Interfaces.C.Strings.chars_ptr with
+   Import => True, Convention => C, External_Name => "libusb_strerror";
+
   type Context is new Pointer;
 
   function Init (Ctx : out Context) return C.int with
@@ -68,7 +72,7 @@ package LibUSB is
 
   type Device_List is new Device_Pointers.Pointer;
 
-  function Get_DeviceList
+  function Get_Device_List
    (Ctx     : Context;
     Devices : out Device_List)
     return C.long with
@@ -77,9 +81,30 @@ package LibUSB is
   procedure Free_Device_List (Devices : Device_List; Unref : C.int) with
    Import => True, Convention => C, External_Name => "libusb_free_device_list";
 
-  function Error_Text
-   (Error_Code : Interfaces.C.int) return Interfaces.C.Strings.chars_ptr with
-   Import => True, Convention => C, External_Name => "libusb_strerror";
+  type Device_Descriptor is record
+    Length                   : C.unsigned_char;
+    Kind                     : C.unsigned_char;
+    Release_Number           : C.unsigned_short; -- BCD encoding
+    Device_Class             : C.unsigned_char;
+    Device_Subclass          : C.unsigned_char;
+    Device_Protocol          : C.unsigned_char;
+    Max_Packet_Size_0        : C.unsigned_char;
+    Vendor_ID                : C.unsigned_short;
+    Product_ID               : C.unsigned_short;
+    Device_Release_Number    : C.unsigned_short; -- BCD encoding
+    Manufacturer_Index       : C.unsigned_char;
+    Product_Index            : C.unsigned_char;
+    Serial_Number_Index      : C.unsigned_char;
+    Number_Of_Configurations : C.unsigned_char;
+  end record;
+  pragma Convention (C, Device_Descriptor);
+
+  function Get_Device_Descriptor
+   (Dev        : Device;
+    Descriptor : out Device_Descriptor)
+    return C.int with
+   Import        => True, Convention => C,
+   External_Name => "libusb_get_device_descriptor";
 
 end LibUSB;
 
